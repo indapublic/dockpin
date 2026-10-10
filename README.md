@@ -9,6 +9,7 @@ About 2 MB of memory, 0% CPU when idle, no icon and no UI.
 
 ```sh
 brew tap indapublic/dockpin https://github.com/indapublic/dockpin
+brew trust --formula indapublic/dockpin/dockpin   # Homebrew 7+ asks to trust third-party taps
 brew install indapublic/dockpin/dockpin
 brew services start dockpin
 ```
