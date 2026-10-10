@@ -290,6 +290,7 @@ int main(int argc, char **argv) {
 
     CFRunLoopSourceRef src = CFMachPortCreateRunLoopSource(NULL, tap, 0);
     CFRunLoopAddSource(CFRunLoopGetMain(), src, kCFRunLoopCommonModes);
+    CFRelease(src);  // the run loop keeps it
     CGEventTapEnable(tap, true);
 
     returnTimer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent() + 1.0, 1e9, 0, 0, spawn_returner, NULL);
