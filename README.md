@@ -5,7 +5,7 @@
 Keeps the macOS Dock on the main display. It stops the Dock from jumping to
 another monitor and brings it back if it ended up there anyway.
 
-About 2 MB of memory, 0% CPU when idle, no icon and no UI.
+About 2 MB of memory, 0% CPU when idle, no UI and nothing in the Dock or the menu bar.
 
 ## Install
 
