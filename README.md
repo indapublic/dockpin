@@ -59,8 +59,8 @@ make        # builds DockPin.app
 make test   # runs the edge-logic tests
 ```
 
-To release: commit, tag `vX.Y.Z`, push the tag, then update `url` and
-`sha256` in `Formula/dockpin.rb` and push the formula.
+Releases are made with `tools/release.sh <x.y.z>` (version bump, tag,
+GitHub release, formula bump).
 
 ## License
 
