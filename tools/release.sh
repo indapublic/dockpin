@@ -98,7 +98,7 @@ retry make DockPin.app SIGN="$IDENTITY" \
 codesign --verify --strict DockPin.app
 lipo -archs DockPin.app/Contents/MacOS/DockPin
 codesign -d -r- DockPin.app 2>/dev/null  # what TCC matches the permission against
-ditto -c -k --keepParent DockPin.app "$WORK/notarize.zip"
+ditto -c -k --norsrc --noextattr --noqtn --noacl --keepParent DockPin.app "$WORK/notarize.zip"
 notarize "$WORK/notarize.zip"
 retry xcrun stapler staple DockPin.app
 spctl --assess --type execute -vv DockPin.app
@@ -110,7 +110,20 @@ ZIP=$WORK/DockPin-$VERSION.zip
 mkdir "$WORK/$PKG"
 ditto DockPin.app "$WORK/$PKG/DockPin.app"
 cp LICENSE README.md "$WORK/$PKG/"
-ditto -c -k --keepParent "$WORK/$PKG" "$ZIP"
+# Without these flags ditto stores extended attributes as ._ AppleDouble
+# entries, which unzip writes out as plain files inside the bundle: that
+# breaks the signature seal and Gatekeeper calls the app damaged.
+ditto -c -k --norsrc --noextattr --noqtn --noacl --keepParent "$WORK/$PKG" "$ZIP"
+
+# Unpack the way Homebrew does and check the result.
+mkdir "$WORK/check"
+unzip -q "$ZIP" -d "$WORK/check"
+if find "$WORK/check" -name '._*' | grep -q .; then
+  echo "The archive contains AppleDouble files"
+  exit 1
+fi
+codesign --verify --strict "$WORK/check/$PKG/DockPin.app"
+spctl --assess --type execute "$WORK/check/$PKG/DockPin.app"
 SHA256=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)
 echo "sha256 $SHA256"
 
