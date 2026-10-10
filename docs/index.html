@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DockPin: keep the macOS Dock on your main display</title>
+<meta name="description" content="DockPin stops the macOS Dock from jumping to another monitor. Tiny, free and open source: about 2 MB of memory, no UI.">
+<meta property="og:title" content="DockPin">
+<meta property="og:description" content="Keeps the macOS Dock on your main display.">
+<meta property="og:image" content="https://indapublic.github.io/dockpin/icon.png">
+<meta property="og:url" content="https://indapublic.github.io/dockpin/">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root {
+  --bg: #F5F6F8; --surface: #FFFFFF; --text: #141B28; --muted: #4A5160;
+  --border: rgba(20, 27, 40, 0.1); --accent: #FF6B3D; --accent-text: #C8461D;
+  --code-bg: #141B28; --code-text: #E8ECF2;
+  --scr-a: #74BBFF; --scr-b: #2F55D4; --frame: #E3E8EF; --frame-dim: #D3D9E2;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1C1D22; --surface: #24262D; --text: #EEF1F5; --muted: #B4BAC6;
+    --border: rgba(255, 255, 255, 0.1); --accent-text: #FF8A63;
+    --code-bg: #111318; --frame: #C9D1DD; --frame-dim: #5A6272;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 760px; margin: 0 auto; padding: 0 20px 64px; }
+a { color: var(--accent-text); }
+header { text-align: center; padding: 72px 0 40px; }
+header img { width: 128px; height: 128px; }
+h1 { font-size: 44px; line-height: 1.1; margin: 20px 0 12px; letter-spacing: -0.02em; }
+.tagline { font-size: 21px; color: var(--muted); margin: 0 auto 32px; max-width: 520px; }
+.actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.button {
+  display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px;
+  border-radius: 12px; font-weight: 600; text-decoration: none; font-size: 17px;
+}
+.primary { background: var(--accent); color: #FFFFFF; }
+.primary:hover { filter: brightness(1.06); }
+.secondary { color: var(--text); border: 1px solid var(--border); background: var(--surface); }
+.note { font-size: 14px; color: var(--muted); margin-top: 14px; }
+section { margin-top: 56px; }
+h2 { font-size: 26px; margin: 0 0 14px; letter-spacing: -0.01em; }
+p { margin: 0 0 14px; }
+.figure { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+.figure svg { display: block; width: 100%; height: auto; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 20px; }
+.fact { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.fact b { display: block; font-size: 24px; }
+.fact span { font-size: 14px; color: var(--muted); }
+.code { position: relative; }
+pre {
+  background: var(--code-bg); color: var(--code-text); border-radius: 14px;
+  padding: 18px 20px; overflow-x: auto; font: 14px/1.7 ui-monospace, "SF Mono", Menlo, monospace; margin: 0;
+}
+.code button {
+  position: absolute; top: 10px; right: 10px; font: 13px -apple-system, system-ui, sans-serif;
+  color: var(--code-text); background: rgba(255, 255, 255, 0.1); border: 0; border-radius: 8px;
+  padding: 5px 10px; cursor: pointer;
+}
+code { font: 0.9em ui-monospace, "SF Mono", Menlo, monospace; overflow-wrap: anywhere; }
+ol { padding-left: 22px; margin: 0 0 14px; }
+li { margin-bottom: 6px; }
+details { border-top: 1px solid var(--border); padding: 14px 0; }
+details:last-of-type { border-bottom: 1px solid var(--border); }
+summary { cursor: pointer; font-weight: 600; }
+details p { margin: 10px 0 0; color: var(--muted); }
+footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 64px; }
+@media (max-width: 520px) {
+  header { padding-top: 48px; }
+  h1 { font-size: 36px; }
+  .tagline { font-size: 18px; }
+  .button { width: 100%; justify-content: center; }
+  pre { padding-top: 46px; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <img src="icon.png" alt="DockPin icon">
+  <h1>DockPin</h1>
+  <p class="tagline">Keeps the macOS Dock on your main display. No more Dock jumping to whichever monitor your pointer touches.</p>
+  <div class="actions">
+    <a class="button primary" href="https://github.com/indapublic/dockpin/releases/latest/download/DockPin.dmg">Download for Mac</a>
+    <a class="button secondary" href="https://github.com/indapublic/dockpin">Source on GitHub</a>
+  </div>
+  <p class="note">Free and open source · macOS 13 or later · Apple silicon and Intel · Notarized by Apple</p>
+</header>
+
+<div class="figure">
+  <svg viewBox="0 0 640 300" role="img" aria-label="The Dock stays on the main display instead of moving to the second one">
+    <defs>
+      <linearGradient id="scr" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="var(--scr-a)"/><stop offset="1" stop-color="var(--scr-b)"/>
+      </linearGradient>
+    </defs>
+    <g opacity="0.55">
+      <rect x="404" y="78" width="212" height="138" rx="12" fill="var(--frame-dim)"/>
+      <rect x="414" y="88" width="192" height="112" rx="6" fill="url(#scr)"/>
+      <rect x="456" y="178" width="108" height="14" rx="6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="5 4"/>
+      <path d="M494 216 L526 216 L532 236 L488 236 Z" fill="var(--frame-dim)"/>
+      <rect x="470" y="234" width="80" height="8" rx="4" fill="var(--frame-dim)"/>
+    </g>
+    <rect x="28" y="38" width="340" height="216" rx="16" fill="var(--frame)"/>
+    <rect x="42" y="52" width="312" height="180" rx="8" fill="url(#scr)"/>
+    <path d="M178 254 L218 254 L226 280 L170 280 Z" fill="var(--frame-dim)"/>
+    <rect x="148" y="276" width="100" height="10" rx="5" fill="var(--frame)"/>
+    <rect x="104" y="196" width="188" height="26" rx="9" fill="#FFFFFF" fill-opacity="0.9"/>
+    <rect x="116" y="201" width="16" height="16" rx="4" fill="#5B8DEF"/>
+    <rect x="142" y="201" width="16" height="16" rx="4" fill="#FFD166"/>
+    <rect x="168" y="201" width="16" height="16" rx="4" fill="#7EE0B5"/>
+    <rect x="212" y="201" width="16" height="16" rx="4" fill="#FF8FA3"/>
+    <rect x="238" y="201" width="16" height="16" rx="4" fill="#B9A6FF"/>
+    <rect x="264" y="201" width="16" height="16" rx="4" fill="#5B8DEF"/>
+    <g transform="translate(198 204) rotate(-16) scale(0.42)">
+      <line x1="0" y1="0" x2="0" y2="-80" stroke="#D5DBE4" stroke-width="12" stroke-linecap="round"/>
+      <rect x="-40" y="-104" width="80" height="28" rx="10" fill="#FF6B3D"/>
+      <path d="M-24 -100 L-32 -176 L32 -176 L24 -100 Z" fill="#FF6B3D"/>
+      <rect x="-66" y="-212" width="132" height="40" rx="20" fill="#FF6B3D"/>
+    </g>
+    <path d="M300 186 C 340 110, 430 96, 500 168" fill="none" stroke="var(--muted)" stroke-width="3" stroke-dasharray="8 8" stroke-linecap="round"/>
+    <g transform="translate(398 118)" stroke="#FF6B3D" stroke-width="6" stroke-linecap="round">
+      <line x1="-12" y1="-12" x2="12" y2="12"/><line x1="12" y1="-12" x2="-12" y2="12"/>
+    </g>
+  </svg>
+</div>
+
+<div class="facts">
+  <div class="fact"><b>~2 MB</b><span>of memory</span></div>
+  <div class="fact"><b>0%</b><span>CPU when idle</span></div>
+  <div class="fact"><b>No UI</b><span>nothing in the Dock or menu bar</span></div>
+</div>
+
+<section>
+  <h2>Install</h2>
+  <ol>
+    <li>Download <a href="https://github.com/indapublic/dockpin/releases/latest/download/DockPin.dmg">DockPin.dmg</a> and drag DockPin to Applications.</li>
+    <li>Open DockPin once. From then on it starts at every login.</li>
+    <li>Allow it in System Settings &gt; Privacy &amp; Security &gt; Accessibility.</li>
+  </ol>
+  <p>Or with Homebrew:</p>
+  <div class="code"><pre id="brew">brew tap indapublic/dockpin https://github.com/indapublic/dockpin
+brew trust --formula indapublic/dockpin/dockpin
+brew install indapublic/dockpin/dockpin
+brew services start dockpin</pre><button type="button" onclick="copyBrew(this)">Copy</button></div>
+</section>
+
+<section>
+  <h2>How it works</h2>
+  <p>macOS moves the Dock to another display when the pointer pushes against that display's bottom edge, or its side edge if the Dock is on the side. DockPin ignores the pointer's movement in a thin 4 pt band along that edge of every display except the main one. The cursor still moves normally, but the Dock never sees the push.</p>
+  <p>If the Dock ends up elsewhere anyway, for example after you plug in a monitor, DockPin brings it back to the main display. The main display is the one you mark as main in System Settings &gt; Displays.</p>
+</section>
+
+<section>
+  <h2>Why it needs Accessibility</h2>
+  <p>Filtering pointer events is something macOS only allows apps with the Accessibility permission to do. DockPin only looks at where the pointer is. It never connects to the network, collects nothing and stores nothing, and its whole source is <a href="https://github.com/indapublic/dockpin/blob/main/dockpin.c">one C file</a> you can read.</p>
+</section>
+
+<section>
+  <h2>Questions</h2>
+  <details>
+    <summary>How do I quit or remove it?</summary>
+    <p>Turn DockPin off in System Settings &gt; General &gt; Login Items, or run <code>/Applications/DockPin.app/Contents/MacOS/DockPin --unregister</code>, then move DockPin to the Trash. With Homebrew: <code>brew services stop dockpin</code> and <code>brew uninstall dockpin</code>.</p>
+  </details>
+  <details>
+    <summary>Does it work with the Dock on the left or right?</summary>
+    <p>Yes. DockPin follows the Dock's position and guards the matching edge.</p>
+  </details>
+  <details>
+    <summary>Will I lose the permission after an update?</summary>
+    <p>No. Releases are signed with the same Developer ID, so macOS keeps the Accessibility permission across updates.</p>
+  </details>
+  <details>
+    <summary>Can I still move the pointer between monitors?</summary>
+    <p>Yes. Edges that border another display are left alone, so the pointer crosses over as usual.</p>
+  </details>
+</section>
+
+<footer>
+  <p>DockPin is MIT licensed. <a href="https://github.com/indapublic/dockpin">GitHub</a> · <a href="https://github.com/indapublic/dockpin/releases">Releases</a></p>
+</footer>
+</main>
+<script>
+function copyBrew(button) {
+  const text = document.getElementById('brew').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    button.textContent = 'Copied';
+    setTimeout(() => { button.textContent = 'Copy'; }, 1500);
+  });
+}
+</script>
+</body>
+</html>
