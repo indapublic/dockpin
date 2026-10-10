@@ -1,4 +1,4 @@
-<img src="assets/icon.png" width="128" alt="DockPin icon">
+<img src="assets/AppIcon.iconset/icon_256x256@2x.png" width="128" alt="DockPin icon">
 
 # DockPin
 
@@ -36,6 +36,7 @@ Run from a clone of this repository; `make help` prints the same list.
 | `make test` | Run the edge-logic tests |
 | `make lint` | Run the clang static analyzer and shellcheck |
 | `make release VERSION=x.y.z` | Build, sign and notarize, tag, publish the GitHub release and update the formula (needs the Developer ID, see `tools/release.sh`) |
+| `make icon` | Render the icon PNGs from `assets/icon.svg` and `assets/icon-small.svg` (needs Google Chrome) |
 | `make clean` | Remove build products |
 
 Without a clone, the same is available through `brew upgrade dockpin`,

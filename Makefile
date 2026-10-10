@@ -19,15 +19,11 @@ DockPin.app: dockpin.c Info.plist AppIcon.icns
 	$(CC) $(CFLAGS) -o $@/Contents/MacOS/DockPin dockpin.c $(FRAMEWORKS)
 	codesign --force --sign "$(SIGN)" $(CODESIGN_FLAGS) $@
 
-AppIcon.icns: assets/icon.png
-	rm -rf AppIcon.iconset
-	mkdir AppIcon.iconset
-	for s in 16 32 128 256 512; do \
-	  sips -z $$s $$s $< --out AppIcon.iconset/icon_$${s}x$${s}.png >/dev/null; \
-	  sips -z $$((s * 2)) $$((s * 2)) $< --out AppIcon.iconset/icon_$${s}x$${s}@2x.png >/dev/null; \
-	done
-	iconutil -c icns -o $@ AppIcon.iconset
-	rm -rf AppIcon.iconset
+AppIcon.icns: $(wildcard assets/AppIcon.iconset/*.png)
+	iconutil -c icns -o $@ assets/AppIcon.iconset
+
+icon: ## Render the icon PNGs from the SVGs (needs Google Chrome)
+	tools/render-icon.sh
 
 tests/edge_test: tests/edge_test.c dockpin.c
 	$(CC) $(CFLAGS) -o $@ tests/edge_test.c $(FRAMEWORKS)
@@ -38,7 +34,7 @@ test: tests/edge_test ## Run the edge-logic tests
 lint: ## Run the clang static analyzer and shellcheck
 	$(CC) --analyze -Xanalyzer -analyzer-output=text -Xanalyzer -analyzer-werror -o /dev/null dockpin.c
 	@command -v shellcheck >/dev/null || { echo "shellcheck is missing: brew install shellcheck"; exit 1; }
-	shellcheck tools/release.sh
+	shellcheck tools/*.sh
 
 install: ## Install from the Homebrew tap and start the service
 	brew tap $(TAP) $(TAP_URL)
@@ -78,9 +74,9 @@ release: ## Release a new version: make release VERSION=x.y.z
 	tools/release.sh $(VERSION)
 
 clean: ## Remove build products
-	rm -rf DockPin.app AppIcon.icns AppIcon.iconset tests/edge_test
+	rm -rf DockPin.app AppIcon.icns tests/edge_test
 
 help: ## List the commands
 	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{ printf "  make %-10s %s\n", $$1, $$2 }'
 
-.PHONY: build test lint install update uninstall start stop restart status logs release clean help
+.PHONY: build icon test lint install update uninstall start stop restart status logs release clean help

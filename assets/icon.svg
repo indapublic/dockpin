@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="DockPin app icon">
+<defs>
+<linearGradient id="ia-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#36465F"></stop><stop offset="1" stop-color="#141B28"></stop></linearGradient>
+<linearGradient id="ia-scr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#74BBFF"></stop><stop offset="1" stop-color="#2F55D4"></stop></linearGradient>
+<linearGradient id="ia-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2F5F9"></stop><stop offset="1" stop-color="#C9D1DD"></stop></linearGradient>
+<filter id="ia-sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000000" flood-opacity="0.4"></feDropShadow></filter>
+<filter id="ia-icon" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.3"></feDropShadow></filter>
+</defs>
+<rect x="100" y="100" width="824" height="824" rx="185" fill="url(#ia-bg)" filter="url(#ia-icon)"></rect>
+<g filter="url(#ia-sh)">
+<rect x="212" y="262" width="600" height="408" rx="40" fill="url(#ia-body)"></rect>
+<rect x="236" y="286" width="552" height="348" rx="20" fill="url(#ia-scr)"></rect>
+<path d="M462 670 L562 670 L584 736 L440 736 Z" fill="#9FAABB"></path>
+<rect x="380" y="730" width="264" height="24" rx="12" fill="#C9D1DD"></rect>
+</g>
+<rect x="306" y="566" width="412" height="52" rx="18" fill="#FFFFFF" fill-opacity="0.32" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="2"></rect>
+<rect x="341" y="576" width="32" height="32" rx="8" fill="#FFFFFF" fill-opacity="0.9"></rect>
+<rect x="403" y="576" width="32" height="32" rx="8" fill="#FFD166"></rect>
+<rect x="465" y="576" width="32" height="32" rx="8" fill="#7EE0B5"></rect>
+<rect x="527" y="576" width="32" height="32" rx="8" fill="#FF8FA3"></rect>
+<rect x="589" y="576" width="32" height="32" rx="8" fill="#B9A6FF"></rect>
+<rect x="651" y="576" width="32" height="32" rx="8" fill="#FFFFFF" fill-opacity="0.9"></rect>
+<g transform="translate(512 568) rotate(-16)" filter="url(#ia-sh)">
+<line x1="0" y1="0" x2="0" y2="-80" stroke="#D5DBE4" stroke-width="12" stroke-linecap="round"></line>
+<rect x="-40" y="-104" width="80" height="28" rx="10" fill="#FF6B3D"></rect>
+<path d="M-24 -100 L-32 -176 L32 -176 L24 -100 Z" fill="#FF6B3D"></path>
+<rect x="-66" y="-212" width="132" height="40" rx="20" fill="#FF6B3D"></rect>
+<rect x="-52" y="-206" width="56" height="12" rx="6" fill="#FFFFFF" fill-opacity="0.45"></rect>
+<path d="M-24 -100 L-32 -176 L-12 -176 L-8 -100 Z" fill="#FFFFFF" fill-opacity="0.22"></path>
+</g>
+</svg>
