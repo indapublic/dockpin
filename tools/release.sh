@@ -96,6 +96,8 @@ plutil -replace CFBundleVersion -string "$BUILD" Info.plist
 retry make DockPin.app SIGN="$IDENTITY" \
   CFLAGS="-O2 -Wall -arch arm64 -arch x86_64 -mmacosx-version-min=11.0"
 codesign --verify --strict DockPin.app
+lipo -archs DockPin.app/Contents/MacOS/DockPin
+codesign -d -r- DockPin.app 2>/dev/null  # what TCC matches the permission against
 ditto -c -k --keepParent DockPin.app "$WORK/notarize.zip"
 notarize "$WORK/notarize.zip"
 retry xcrun stapler staple DockPin.app
