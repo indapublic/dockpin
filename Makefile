@@ -11,12 +11,23 @@ FORMULA = $(TAP)/dockpin
 
 build: DockPin.app ## Build DockPin.app (default)
 
-DockPin.app: dockpin.c Info.plist
+DockPin.app: dockpin.c Info.plist AppIcon.icns
 	rm -rf $@
-	mkdir -p $@/Contents/MacOS
+	mkdir -p $@/Contents/MacOS $@/Contents/Resources
 	cp Info.plist $@/Contents/Info.plist
+	cp AppIcon.icns $@/Contents/Resources/AppIcon.icns
 	$(CC) $(CFLAGS) -o $@/Contents/MacOS/DockPin dockpin.c $(FRAMEWORKS)
 	codesign --force --sign "$(SIGN)" $(CODESIGN_FLAGS) $@
+
+AppIcon.icns: assets/icon.png
+	rm -rf AppIcon.iconset
+	mkdir AppIcon.iconset
+	for s in 16 32 128 256 512; do \
+	  sips -z $$s $$s $< --out AppIcon.iconset/icon_$${s}x$${s}.png >/dev/null; \
+	  sips -z $$((s * 2)) $$((s * 2)) $< --out AppIcon.iconset/icon_$${s}x$${s}@2x.png >/dev/null; \
+	done
+	iconutil -c icns -o $@ AppIcon.iconset
+	rm -rf AppIcon.iconset
 
 tests/edge_test: tests/edge_test.c dockpin.c
 	$(CC) $(CFLAGS) -o $@ tests/edge_test.c $(FRAMEWORKS)
@@ -67,7 +78,7 @@ release: ## Release a new version: make release VERSION=x.y.z
 	tools/release.sh $(VERSION)
 
 clean: ## Remove build products
-	rm -rf DockPin.app tests/edge_test
+	rm -rf DockPin.app AppIcon.icns AppIcon.iconset tests/edge_test
 
 help: ## List the commands
 	@grep -E '^[a-z]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{ printf "  make %-10s %s\n", $$1, $$2 }'

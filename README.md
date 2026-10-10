@@ -1,3 +1,5 @@
+<img src="assets/icon.png" width="128" alt="DockPin icon">
+
 # DockPin
 
 Keeps the macOS Dock on the main display. It stops the Dock from jumping to
