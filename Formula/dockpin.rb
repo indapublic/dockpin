@@ -6,7 +6,7 @@ class Dockpin < Formula
   license "MIT"
   head "https://github.com/indapublic/dockpin.git", branch: "main"
 
-  depends_on macos: :big_sur
+  depends_on :macos
 
   def install
     # Release archives carry DockPin.app signed with a Developer ID, so the
