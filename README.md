@@ -14,28 +14,37 @@ brew install indapublic/dockpin/dockpin
 brew services start dockpin
 ```
 
+From a clone of this repository, `make install` does the same.
+
 Then enable DockPin in System Settings > Privacy & Security > Accessibility.
 
-## Update
+## Commands
 
-```sh
-brew upgrade dockpin
-brew services restart dockpin
-```
+Run from a clone of this repository; `make help` prints the same list.
 
-macOS asks for the Accessibility permission again after an update, because
+| Command | What it does |
+| --- | --- |
+| `make install` | Install from the Homebrew tap and start the service |
+| `make update` | Upgrade to the latest release and restart the service |
+| `make uninstall` | Stop the service and uninstall |
+| `make start`, `make stop`, `make restart` | Control the service |
+| `make status` | Show the service state and memory footprint |
+| `make logs` | Follow the service log |
+| `make` | Build `DockPin.app` |
+| `make test` | Run the edge-logic tests |
+| `make lint` | Run the clang static analyzer and shellcheck |
+| `make release VERSION=x.y.z` | Bump the version, tag, publish the GitHub release and update the formula |
+| `make clean` | Remove build products |
+
+Without a clone, the same is available through `brew upgrade dockpin`,
+`brew uninstall dockpin` and `brew services start|stop|restart dockpin`.
+
+After an update macOS asks for the Accessibility permission again, because
 the new build has a different signature. DockPin removes the stale entry
 itself, so you only need to switch it on.
 
-## Uninstall
-
-```sh
-brew services stop dockpin
-brew uninstall dockpin
-```
-
-Then remove DockPin from System Settings > Privacy & Security > Accessibility
-with the − button.
+After uninstalling, remove DockPin from System Settings > Privacy & Security >
+Accessibility with the − button.
 
 ## How it works
 
@@ -51,16 +60,6 @@ where the Dock is and, if needed, brings it back to the main display by
 briefly pushing the pointer against that display's edge.
 
 The main display is the one marked as main in System Settings > Displays.
-
-## Development
-
-```sh
-make        # builds DockPin.app
-make test   # runs the edge-logic tests
-```
-
-Releases are made with `tools/release.sh <x.y.z>` (version bump, tag,
-GitHub release, formula bump).
 
 ## License
 
