@@ -6,10 +6,13 @@ class Dockpin < Formula
   license "MIT"
   head "https://github.com/indapublic/dockpin.git", branch: "main"
 
-  depends_on :macos
+  depends_on macos: :big_sur
 
   def install
-    system "make", "DockPin.app"
+    # Release archives carry DockPin.app signed with a Developer ID, so the
+    # Accessibility permission survives updates. Source archives and HEAD
+    # are built here and signed ad hoc.
+    system "make", "DockPin.app" unless File.exist?("DockPin.app")
     prefix.install "DockPin.app"
   end
 
@@ -28,7 +31,6 @@ class Dockpin < Formula
         brew services start dockpin
 
       Then allow it in System Settings > Privacy & Security > Accessibility.
-      After an upgrade macOS asks for this permission again.
     EOS
   end
 

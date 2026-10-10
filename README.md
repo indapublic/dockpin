@@ -33,15 +33,17 @@ Run from a clone of this repository; `make help` prints the same list.
 | `make` | Build `DockPin.app` |
 | `make test` | Run the edge-logic tests |
 | `make lint` | Run the clang static analyzer and shellcheck |
-| `make release VERSION=x.y.z` | Bump the version, tag, publish the GitHub release and update the formula |
+| `make release VERSION=x.y.z` | Build, sign and notarize, tag, publish the GitHub release and update the formula (needs the Developer ID, see `tools/release.sh`) |
 | `make clean` | Remove build products |
 
 Without a clone, the same is available through `brew upgrade dockpin`,
 `brew uninstall dockpin` and `brew services start|stop|restart dockpin`.
 
-After an update macOS asks for the Accessibility permission again, because
-the new build has a different signature. DockPin removes the stale entry
-itself, so you only need to switch it on.
+Releases are universal builds signed with a Developer ID and notarized, so the
+Accessibility permission survives updates. Builds from source (`--HEAD`,
+`make`) are signed ad hoc, and macOS asks for the permission again after each
+of them; DockPin removes the stale entry itself, so you only need to switch
+it on.
 
 After uninstalling, remove DockPin from System Settings > Privacy & Security >
 Accessibility with the − button.

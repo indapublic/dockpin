@@ -1,6 +1,10 @@
 # DockPin. `make help` lists the commands.
 CFLAGS ?= -O2 -Wall
 FRAMEWORKS = -framework CoreGraphics -framework CoreFoundation
+# Ad hoc by default; a real identity also gets the hardened runtime and a
+# timestamp, which notarization requires.
+SIGN ?= -
+CODESIGN_FLAGS = $(if $(filter -,$(SIGN)),,--options runtime --timestamp)
 TAP = indapublic/dockpin
 TAP_URL = https://github.com/indapublic/dockpin
 FORMULA = $(TAP)/dockpin
@@ -12,7 +16,7 @@ DockPin.app: dockpin.c Info.plist
 	mkdir -p $@/Contents/MacOS
 	cp Info.plist $@/Contents/Info.plist
 	$(CC) $(CFLAGS) -o $@/Contents/MacOS/DockPin dockpin.c $(FRAMEWORKS)
-	codesign --force --sign - $@
+	codesign --force --sign "$(SIGN)" $(CODESIGN_FLAGS) $@
 
 tests/edge_test: tests/edge_test.c dockpin.c
 	$(CC) $(CFLAGS) -o $@ tests/edge_test.c $(FRAMEWORKS)
