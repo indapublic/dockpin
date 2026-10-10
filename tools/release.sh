@@ -1,7 +1,8 @@
 #!/bin/bash
 # Releases DockPin <version>: builds a universal DockPin.app signed with the
-# Developer ID and notarized, tags v<version>, publishes the app as a GitHub
-# release and points Formula/dockpin.rb at it (commit + push).
+# Developer ID and notarized, tags v<version>, publishes it as a GitHub
+# release (a zip for Homebrew and DockPin.dmg) and points Formula/dockpin.rb
+# at the zip (commit + push).
 #
 # The Developer ID signature is what keeps the Accessibility permission across
 # updates: macOS ties it to the team and bundle id instead of the exact build.
@@ -127,6 +128,19 @@ spctl --assess --type execute "$WORK/check/$PKG/DockPin.app"
 SHA256=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)
 echo "sha256 $SHA256"
 
+step "DMG"
+# One name for every release, so releases/latest/download/DockPin.dmg always
+# points at the newest one.
+DMG=$WORK/DockPin.dmg
+mkdir "$WORK/dmg"
+ditto --norsrc --noextattr --noqtn DockPin.app "$WORK/dmg/DockPin.app"
+ln -s /Applications "$WORK/dmg/Applications"
+hdiutil create -volname DockPin -srcfolder "$WORK/dmg" -fs APFS -format ULFO -ov "$DMG" >/dev/null
+retry codesign --force --sign "$IDENTITY" --timestamp "$DMG"
+notarize "$DMG"
+retry xcrun stapler staple "$DMG"
+spctl --assess --type open --context context:primary-signature -v "$DMG"
+
 if [ "$DRY_RUN" = 1 ]; then
   echo
   echo "Dry run: nothing committed or published."
@@ -143,10 +157,11 @@ retry git push -q origin main "$TAG"
 step "Publish $TAG to $GH_REPO"
 # gh deletes the half-created release when the upload fails, so a retry
 # starts clean.
-retry gh release create "$TAG" "$ZIP" --repo "$GH_REPO" --title "DockPin $VERSION" \
+retry gh release create "$TAG" "$ZIP" "$DMG" --repo "$GH_REPO" --title "DockPin $VERSION" \
   --notes "Universal build, signed with a Developer ID and notarized.
 
-Install or update: \`brew upgrade dockpin\` (see README)."
+Download DockPin.dmg, drag DockPin to Applications and open it once. With
+Homebrew: \`brew upgrade dockpin\` (see README)."
 
 step "Point the formula at $TAG"
 URL=https://github.com/$GH_REPO/releases/download/$TAG/DockPin-$VERSION.zip

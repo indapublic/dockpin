@@ -8,11 +8,18 @@
 // At startup and after display changes it also brings the Dock back to the
 // main display if it is elsewhere. That work runs in a short-lived child
 // (`DockPin --return`) so the resident process stays as small as possible.
+//
+// Homebrew installs are started at login by `brew services`. A copy installed
+// from the DMG registers the launch agent in its own bundle instead and hands
+// over to it; `DockPin --unregister` removes that agent again.
 
 #include <CoreGraphics/CoreGraphics.h>
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <mach-o/dyld.h>
+#include <objc/message.h>
+#include <objc/runtime.h>
 #include <signal.h>
 #include <spawn.h>
 #include <stdio.h>
@@ -26,6 +33,7 @@
 #define BAND 4.0           // points from the edge where events are swallowed
 #define PREFS_RECHECK 2.0  // seconds between Dock orientation re-checks
 #define MOVE_ATTEMPTS 3    // tries to bring the Dock back per display change
+#define AGENT_LABEL "com.indapublic.dockpin"  // Contents/Library/LaunchAgents/<label>.plist
 
 enum { EDGE_BOTTOM, EDGE_LEFT, EDGE_RIGHT };
 
@@ -262,6 +270,59 @@ static void request_access(void) {
     CFRelease(opts);
 }
 
+// --- Starting at login without Homebrew --------------------------------------
+
+enum { AGENT_NOT_REGISTERED, AGENT_ENABLED, AGENT_REQUIRES_APPROVAL, AGENT_NOT_FOUND };
+
+// The SMAppService for the launch agent in this bundle, or nil before macOS 13.
+// ServiceManagement is loaded on demand, so the resident process never maps it.
+static id login_agent(void) {
+    if (!dlopen("/System/Library/Frameworks/ServiceManagement.framework/ServiceManagement", RTLD_LAZY))
+        return nil;
+    Class cls = objc_getClass("SMAppService");
+    if (!cls) return nil;
+    return ((id (*)(Class, SEL, id))objc_msgSend)(
+        cls, sel_registerName("agentServiceWithPlistName:"), (id)CFSTR(AGENT_LABEL ".plist"));
+}
+
+static bool agent_call(id agent, const char *selector) {
+    return ((BOOL (*)(id, SEL, id *))objc_msgSend)(agent, sel_registerName(selector), NULL);
+}
+
+// For a copy the user opened by hand: makes sure the launch agent runs
+// DockPin, now and at every login. Returns false when this process should do
+// the work itself: before macOS 13, or after the user turned DockPin off in
+// Login Items, which a manual start must not override.
+static bool hand_over_to_agent(void) {
+    id agent = login_agent();
+    if (!agent) return false;
+    long status = ((long (*)(id, SEL))objc_msgSend)(agent, sel_registerName("status"));
+    if (status == AGENT_ENABLED) return true;
+    if (status == AGENT_REQUIRES_APPROVAL) return false;
+    if (!agent_call(agent, "registerAndReturnError:")) return false;
+    fprintf(stderr, "DockPin: registered the login agent\n");
+    return true;
+}
+
+// `DockPin --unregister`: stops DockPin and removes it from Login Items.
+static int unregister_agent(void) {
+    id agent = login_agent();
+    return agent && agent_call(agent, "unregisterAndReturnError:") ? 0 : 1;
+}
+
+// launchd names the job of an app opened from Finder (or `open`)
+// application.<bundle id>.<n>; the agent runs as AGENT_LABEL, brew services
+// as sh.brew.dockpin, and a build started from a terminal inherits its name.
+static bool opened_from_finder(void) {
+    const char *job = getenv("XPC_SERVICE_NAME"), *prefix = "application." AGENT_LABEL ".";
+    return job && strncmp(job, prefix, strlen(prefix)) == 0;
+}
+
+static bool installed_by_homebrew(void) {
+    char real[PATH_MAX];
+    return realpath(selfPath, real) && strstr(real, "/Cellar/");
+}
+
 int main(int argc, char **argv) {
     const char *home = getenv("HOME");
     snprintf(prefsPath, sizeof prefsPath, "%s/Library/Preferences/com.apple.dock.plist", home ? home : "");
@@ -269,6 +330,8 @@ int main(int argc, char **argv) {
     if (_NSGetExecutablePath(selfPath, &size) != 0) selfPath[0] = 0;
 
     if (argc > 1 && strcmp(argv[1], "--return") == 0) return return_dock();
+    if (argc > 1 && strcmp(argv[1], "--unregister") == 0) return unregister_agent();
+    if (opened_from_finder() && !installed_by_homebrew() && hand_over_to_agent()) return 0;
 
     // AXIsProcessTrusted() can stay stale for the life of the process after the
     // user grants access, so the tap itself is the permission check.

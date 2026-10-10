@@ -1,6 +1,6 @@
 # DockPin. `make help` lists the commands.
 CFLAGS ?= -O2 -Wall
-FRAMEWORKS = -framework CoreGraphics -framework CoreFoundation
+FRAMEWORKS = -framework CoreGraphics -framework CoreFoundation -lobjc
 # Ad hoc by default; a real identity also gets the hardened runtime and a
 # timestamp, which notarization requires.
 SIGN ?= -
@@ -11,10 +11,11 @@ FORMULA = $(TAP)/dockpin
 
 build: DockPin.app ## Build DockPin.app (default)
 
-DockPin.app: dockpin.c Info.plist AppIcon.icns
+DockPin.app: dockpin.c Info.plist LaunchAgent.plist AppIcon.icns
 	rm -rf $@
-	mkdir -p $@/Contents/MacOS $@/Contents/Resources
+	mkdir -p $@/Contents/MacOS $@/Contents/Resources $@/Contents/Library/LaunchAgents
 	cp Info.plist $@/Contents/Info.plist
+	cp LaunchAgent.plist $@/Contents/Library/LaunchAgents/com.indapublic.dockpin.plist
 	cp AppIcon.icns $@/Contents/Resources/AppIcon.icns
 	$(CC) $(CFLAGS) -o $@/Contents/MacOS/DockPin dockpin.c $(FRAMEWORKS)
 	codesign --force --sign "$(SIGN)" $(CODESIGN_FLAGS) $@

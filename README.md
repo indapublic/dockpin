@@ -7,7 +7,15 @@ another monitor and brings it back if it ended up there anyway.
 
 About 2 MB of memory, 0% CPU when idle, no UI and nothing in the Dock or the menu bar.
 
+Website: <https://indapublic.github.io/dockpin/>
+
 ## Install
+
+**Download.** Get [DockPin.dmg](https://github.com/indapublic/dockpin/releases/latest/download/DockPin.dmg),
+drag DockPin to Applications and open it once. From then on it starts at every
+login (macOS 13 or later; on older versions install it with Homebrew).
+
+**Homebrew.**
 
 ```sh
 brew tap indapublic/dockpin https://github.com/indapublic/dockpin
@@ -16,9 +24,11 @@ brew install indapublic/dockpin/dockpin
 brew services start dockpin
 ```
 
-From a clone of this repository, `make install` does the same.
+From a clone of this repository, `make install` does the same. Use one way or
+the other, not both.
 
-Then enable DockPin in System Settings > Privacy & Security > Accessibility.
+Either way, then enable DockPin in System Settings > Privacy & Security >
+Accessibility.
 
 ## Commands
 
@@ -48,8 +58,13 @@ Accessibility permission survives updates. Builds from source (`--HEAD`,
 of them; DockPin removes the stale entry itself, so you only need to switch
 it on.
 
-After uninstalling, remove DockPin from System Settings > Privacy & Security >
-Accessibility with the − button.
+To remove a copy installed from the DMG, run
+`/Applications/DockPin.app/Contents/MacOS/DockPin --unregister` (it stops
+DockPin and takes it out of Login Items), then move DockPin to the Trash.
+Turning DockPin off in System Settings > General > Login Items stops it too.
+
+After uninstalling either way, remove DockPin from System Settings > Privacy &
+Security > Accessibility with the − button.
 
 ## How it works
 
