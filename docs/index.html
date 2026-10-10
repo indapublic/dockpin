@@ -3,198 +3,666 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DockPin: keep the macOS Dock on your main display</title>
-<meta name="description" content="DockPin stops the macOS Dock from jumping to another monitor. Tiny, free and open source: about 2 MB of memory, no UI.">
-<meta property="og:title" content="DockPin">
-<meta property="og:description" content="Keeps the macOS Dock on your main display.">
-<meta property="og:image" content="https://indapublic.github.io/dockpin/icon.png">
-<meta property="og:url" content="https://indapublic.github.io/dockpin/">
+<title>DockPin — keep the macOS Dock on your main display</title>
+<meta name="description" content="DockPin stops the macOS Dock from jumping to another monitor. Free and open source, about 2 MB of memory, no UI.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://indapublic.github.io/dockpin/">
 <link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://indapublic.github.io/dockpin/">
+<meta property="og:title" content="DockPin — keep the macOS Dock on your main display">
+<meta property="og:description" content="The Dock stops jumping to whichever monitor your pointer touches.">
+<meta property="og:image" content="https://indapublic.github.io/dockpin/icon.png">
+<meta name="twitter:card" content="summary">
 <style>
 :root {
-  --bg: #F5F6F8; --surface: #FFFFFF; --text: #141B28; --muted: #4A5160;
-  --border: rgba(20, 27, 40, 0.1); --accent: #FF6B3D; --accent-text: #C8461D;
-  --code-bg: #141B28; --code-text: #E8ECF2;
-  --scr-a: #74BBFF; --scr-b: #2F55D4; --frame: #E3E8EF; --frame-dim: #D3D9E2;
+  --bg: #ffffff;
+  --bg-soft: #f6f7fa;
+  --text: #141826;
+  --muted: #5a6072;
+  --line: #e4e7ee;
+  --brand: #2f55d4;
+  --btn: #f0602e;
+  --btn-hover: #dc5122;
+  --btn-shadow: rgba(240, 96, 46, .28);
+  --glow: rgba(47, 85, 212, .14);
+  --code-bg: #f2f4f8;
+  --shadow: 0 1px 2px rgba(15, 20, 40, .06), 0 18px 50px rgba(20, 35, 90, .14);
+  --shadow-sm: 0 1px 2px rgba(15, 20, 40, .06), 0 6px 18px rgba(20, 35, 90, .10);
+
+  /* The displays in the pictures. */
+  --bezel: #e2e6ed;
+  --bezel-edge: #cdd3dc;
+  --stand: #c9d0da;
+  --wall-a: #74bbff;
+  --wall-b: #2f55d4;
+  --desk: #f3f5f9;
+
+  /* Accent colors, as on the icon's Dock. */
+  --pin: #ff6b3d;
+  --c1: #2f6fec;
+  --c2: #e2950b;
+  --c3: #1f9d55;
+  --c4: #e0476b;
+  --c5: #7a5cf0;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1C1D22; --surface: #24262D; --text: #EEF1F5; --muted: #B4BAC6;
-    --border: rgba(255, 255, 255, 0.1); --accent-text: #FF8A63;
-    --code-bg: #111318; --frame: #C9D1DD; --frame-dim: #5A6272;
+    --bg: #0f1117;
+    --bg-soft: #161922;
+    --text: #eef1f6;
+    --muted: #a2a9b8;
+    --line: #262a35;
+    --brand: #8fb4ff;
+    --btn: #ff6b3d;
+    --btn-hover: #ff7f56;
+    --btn-shadow: rgba(255, 107, 61, .25);
+    --glow: rgba(70, 110, 255, .22);
+    --code-bg: #1a1e28;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 18px 50px rgba(0, 0, 0, .5);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .35);
+
+    --bezel: #2b303b;
+    --bezel-edge: #3b4150;
+    --stand: #3a404d;
+    --wall-a: #4f8ff0;
+    --wall-b: #22389a;
+    --desk: #141720;
+
+    --c1: #5b8ff5;
+    --c2: #f2b13a;
+    --c3: #34b56c;
+    --c4: #f06a88;
+    --c5: #9b84f6;
   }
 }
-* { box-sizing: border-box; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
-main { max-width: 760px; margin: 0 auto; padding: 0 20px 64px; }
-a { color: var(--accent-text); }
-header { text-align: center; padding: 72px 0 40px; }
-header img { width: 128px; height: 128px; }
-h1 { font-size: 44px; line-height: 1.1; margin: 20px 0 12px; letter-spacing: -0.02em; }
-.tagline { font-size: 21px; color: var(--muted); margin: 0 auto 32px; max-width: 520px; }
-.actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-.button {
-  display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px;
-  border-radius: 12px; font-weight: 600; text-decoration: none; font-size: 17px;
+a { color: var(--brand); text-underline-offset: 2px; }
+code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px; } }
+
+/* Header */
+.top { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; position: relative; z-index: 1; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 18px; color: var(--text); text-decoration: none; }
+.brand img { width: 30px; height: 30px; }
+.top nav { display: flex; gap: 22px; }
+.top nav a { color: var(--muted); text-decoration: none; font-size: 15px; }
+.top nav a:hover { color: var(--text); }
+@media (max-width: 600px) { .top nav a.opt { display: none; } }
+
+/* Hero */
+.hero-bg { position: absolute; inset: 0 0 auto; height: 720px; background: radial-gradient(60% 55% at 50% 0%, var(--glow), transparent 70%); pointer-events: none; }
+.hero { text-align: center; padding: 40px 0 0; position: relative; }
+.hero-icon { width: 104px; height: 104px; filter: drop-shadow(0 10px 24px rgba(20, 35, 90, .3)); }
+h1 {
+  font-size: clamp(40px, 7.4vw, 76px);
+  line-height: 1.03;
+  letter-spacing: -.035em;
+  font-weight: 760;
+  margin: 18px 0 18px;
 }
-.primary { background: var(--accent); color: #FFFFFF; }
-.primary:hover { filter: brightness(1.06); }
-.secondary { color: var(--text); border: 1px solid var(--border); background: var(--surface); }
-.note { font-size: 14px; color: var(--muted); margin-top: 14px; }
-section { margin-top: 56px; }
-h2 { font-size: 26px; margin: 0 0 14px; letter-spacing: -0.01em; }
-p { margin: 0 0 14px; }
-.figure { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
-.figure svg { display: block; width: 100%; height: auto; }
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 20px; }
-.fact { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-.fact b { display: block; font-size: 24px; }
-.fact span { font-size: 14px; color: var(--muted); }
-.code { position: relative; }
-pre {
-  background: var(--code-bg); color: var(--code-text); border-radius: 14px;
-  padding: 18px 20px; overflow-x: auto; font: 14px/1.7 ui-monospace, "SF Mono", Menlo, monospace; margin: 0;
+.lede { font-size: clamp(18px, 2.3vw, 21px); line-height: 1.5; color: var(--muted); max-width: 650px; margin: 0 auto 32px; }
+.cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  height: 48px; padding: 0 22px; border-radius: 12px;
+  font: inherit; font-weight: 600; font-size: 16px; text-decoration: none;
+  border: 1px solid transparent; cursor: pointer;
 }
-.code button {
-  position: absolute; top: 10px; right: 10px; font: 13px -apple-system, system-ui, sans-serif;
-  color: var(--code-text); background: rgba(255, 255, 255, 0.1); border: 0; border-radius: 8px;
-  padding: 5px 10px; cursor: pointer;
+.btn svg { width: 18px; height: 18px; }
+.btn-primary { background: var(--btn); color: #fff; box-shadow: 0 6px 20px var(--btn-shadow); }
+.btn-primary:hover { background: var(--btn-hover); }
+.btn-ghost { background: var(--bg); color: var(--text); border-color: var(--line); }
+.btn-ghost:hover { background: var(--bg-soft); }
+.meta { margin: 16px 0 0; font-size: 14px; color: var(--muted); }
+.meta + .meta { margin-top: 2px; }
+
+/* The desk demo */
+.demo { max-width: 1000px; margin: 52px auto 0; }
+.desk {
+  position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 4%;
+  padding: 7% 6% 5%; border-radius: 20px; background: var(--desk); border: 1px solid var(--line);
+  box-shadow: var(--shadow); overflow: hidden; touch-action: manipulation;
 }
-code { font: 0.9em ui-monospace, "SF Mono", Menlo, monospace; overflow-wrap: anywhere; }
-ol { padding-left: 22px; margin: 0 0 14px; }
-li { margin-bottom: 6px; }
-details { border-top: 1px solid var(--border); padding: 14px 0; }
-details:last-of-type { border-bottom: 1px solid var(--border); }
-summary { cursor: pointer; font-weight: 600; }
-details p { margin: 10px 0 0; color: var(--muted); }
-footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 64px; }
-@media (max-width: 520px) {
-  header { padding-top: 48px; }
-  h1 { font-size: 36px; }
-  .tagline { font-size: 18px; }
-  .button { width: 100%; justify-content: center; }
-  pre { padding-top: 46px; }
+.display { display: flex; flex-direction: column; align-items: center; }
+.display.main { width: 54%; }
+.display.second { width: 38%; margin-bottom: 1%; }
+.bezel { width: 100%; padding: 2.4%; border-radius: 12px; background: var(--bezel); border: 1px solid var(--bezel-edge); }
+.screen {
+  position: relative; aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden;
+  background: radial-gradient(120% 90% at 20% 10%, var(--wall-a), var(--wall-b));
+}
+.screen::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4.5%; background: rgba(255, 255, 255, .22); }
+.neck { width: 16%; height: 22px; background: var(--stand); clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%); }
+.foot { width: 38%; height: 7px; border-radius: 4px; background: var(--stand); }
+.dock {
+  position: absolute; left: 50%; bottom: 3.5%; display: flex; gap: 6%; width: 64%; padding: 2.4% 3.2%;
+  border-radius: 12px; background: rgba(255, 255, 255, .82); border: 1px solid rgba(255, 255, 255, .9);
+  transform: translate(-50%, 160%); transition: transform .45s cubic-bezier(.3, .7, .2, 1);
+}
+.dock.shown { transform: translate(-50%, 0); }
+.dock i { flex: 1; aspect-ratio: 1; border-radius: 22%; }
+.dock i:nth-child(1) { background: #5b8def; }
+.dock i:nth-child(2) { background: #ffd166; }
+.dock i:nth-child(3) { background: #7ee0b5; }
+.dock i:nth-child(4) { background: #ff8fa3; }
+.dock i:nth-child(5) { background: #b9a6ff; }
+.dock i:nth-child(6) { background: #5b8def; }
+.guard {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 5%; background: var(--pin);
+  opacity: 0; transition: opacity .3s;
+}
+.desk.on .guard { opacity: .35; }
+.guard.hit { animation: hit .8s ease; }
+@keyframes hit { 0%, 100% { opacity: .35; } 30% { opacity: 1; } }
+.pointer {
+  position: absolute; left: 0; top: 0; width: 22px; height: 22px; margin: -2px 0 0 -3px; pointer-events: none;
+  transition: transform .9s cubic-bezier(.45, .05, .25, 1), opacity .3s; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .35));
+}
+.pointer.push svg { animation: push .5s ease 2; }
+@keyframes push { 0%, 100% { transform: none; } 50% { transform: translateY(5px); } }
+.pointer.gone { opacity: 0; }
+.controls { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
+.switch { display: inline-flex; padding: 3px; border-radius: 11px; background: var(--bg-soft); border: 1px solid var(--line); }
+.switch button {
+  height: 34px; padding: 0 16px; border: 0; border-radius: 8px; background: transparent; color: var(--muted);
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.switch button[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: var(--shadow-sm); }
+.switch button:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.caption { text-align: center; color: var(--muted); font-size: 14px; margin: 12px auto 0; max-width: 640px; min-height: 2.9em; }
+@media (max-width: 600px) {
+  .desk { padding: 9% 4% 6%; border-radius: 16px; }
+  .neck { height: 12px; }
+  .foot { height: 5px; }
+  .pointer { width: 16px; height: 16px; }
+}
+
+/* Sections */
+section { padding: 96px 0 0; }
+@media (max-width: 600px) { section { padding-top: 72px; } }
+h2 { font-size: clamp(28px, 4.2vw, 42px); line-height: 1.12; letter-spacing: -.025em; font-weight: 740; margin: 0 0 14px; }
+.sub { color: var(--muted); font-size: 18px; max-width: 660px; margin: 0 0 40px; }
+
+/* Without and with */
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 760px) { .cmp { grid-template-columns: 1fr; } }
+.cmp figure { margin: 0; padding: 28px; border-radius: 18px; background: var(--bg-soft); border: 1px solid var(--line); }
+.cmp svg { display: block; width: 100%; height: auto; }
+.cmp figcaption { margin-top: 18px; color: var(--muted); }
+.cmp figcaption strong { display: block; color: var(--text); font-size: 18px; margin-bottom: 2px; }
+
+/* Features */
+.features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (max-width: 760px) { .features { grid-template-columns: 1fr; } }
+.feature { position: relative; padding: 24px 26px 22px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg); overflow: hidden; }
+.feature::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--c); }
+.feature h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -.01em; }
+.feature p { margin: 0; color: var(--muted); }
+
+/* Install */
+.install { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .install { grid-template-columns: 1fr; } }
+.card { padding: 28px; border-radius: 18px; border: 1px solid var(--line); background: var(--bg-soft); min-width: 0; }
+.card h3 { margin: 0 0 4px; font-size: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tag { font-size: 12px; font-weight: 600; color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, transparent); padding: 2px 9px; border-radius: 999px; }
+.card p { color: var(--muted); margin: 0 0 18px; }
+.card p.after { margin: 16px 0 0; font-size: 15px; }
+.card p code, .faq p code { overflow-wrap: anywhere; }
+@media (max-width: 600px) { .card, .cmp figure { padding: 20px; } }
+.code { position: relative; border-radius: 12px; background: var(--code-bg); border: 1px solid var(--line); }
+.code-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 8px 18px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.code pre { margin: 0; padding: 14px 18px; overflow-x: auto; font-size: 13.5px; line-height: 1.75; }
+.copy {
+  height: 28px; padding: 0 12px; border-radius: 8px;
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  color: var(--text); background: var(--bg); border: 1px solid var(--line);
+}
+.copy:hover { background: var(--bg-soft); }
+.reqs { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 22px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 15px; }
+.reqs li::before { content: "✓"; color: var(--c3); font-weight: 700; margin-right: 7px; }
+.then { margin: 18px 0 0; color: var(--muted); font-size: 15px; }
+
+/* Limitations */
+.limits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 40px; margin: 0; padding: 0; list-style: none; }
+@media (max-width: 760px) { .limits { grid-template-columns: 1fr; } }
+.limits li { padding: 18px 0; border-top: 1px solid var(--line); color: var(--muted); }
+.limits strong { display: block; color: var(--text); font-size: 17px; margin-bottom: 2px; }
+
+/* FAQ */
+.faq { max-width: 780px; }
+.faq details { border-top: 1px solid var(--line); }
+.faq details:last-child { border-bottom: 1px solid var(--line); }
+.faq summary { cursor: pointer; list-style: none; padding: 18px 36px 18px 0; position: relative; font-weight: 600; font-size: 17px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; position: absolute; right: 4px; top: 14px; font-size: 24px; font-weight: 400; color: var(--muted); transition: transform .2s; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { margin: -6px 0 20px; color: var(--muted); }
+
+/* Footer */
+footer { margin-top: 110px; padding: 36px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+footer .wrap { display: flex; gap: 24px; justify-content: space-between; flex-wrap: wrap; }
+footer p { margin: 0; max-width: 640px; }
+footer a { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .dock, .pointer, .guard { transition: none; }
+  .guard.hit, .pointer.push svg { animation: none; }
 }
 </style>
 </head>
 <body>
-<main>
-<header>
-  <img src="icon.png" alt="DockPin icon">
-  <h1>DockPin</h1>
-  <p class="tagline">Keeps the macOS Dock on your main display. No more Dock jumping to whichever monitor your pointer touches.</p>
-  <div class="actions">
-    <a class="button primary" href="https://github.com/indapublic/dockpin/releases/latest/download/DockPin.dmg">Download for Mac</a>
-    <a class="button secondary" href="https://github.com/indapublic/dockpin">Source on GitHub</a>
-  </div>
-  <p class="note">Free and open source · macOS 13 or later · Apple silicon and Intel · Notarized by Apple</p>
-</header>
+<div class="hero-bg" aria-hidden="true"></div>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><img src="icon.png" alt="" width="30" height="30">DockPin</a>
+    <nav>
+      <a class="opt" href="#features">Features</a>
+      <a class="opt" href="#limits">Limitations</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/indapublic/dockpin">GitHub</a>
+    </nav>
+  </header>
 
-<div class="figure">
-  <svg viewBox="0 0 640 300" role="img" aria-label="The Dock stays on the main display instead of moving to the second one">
-    <defs>
-      <linearGradient id="scr" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="var(--scr-a)"/><stop offset="1" stop-color="var(--scr-b)"/>
-      </linearGradient>
-    </defs>
-    <g opacity="0.55">
-      <rect x="404" y="78" width="212" height="138" rx="12" fill="var(--frame-dim)"/>
-      <rect x="414" y="88" width="192" height="112" rx="6" fill="url(#scr)"/>
-      <rect x="456" y="178" width="108" height="14" rx="6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="5 4"/>
-      <path d="M494 216 L526 216 L532 236 L488 236 Z" fill="var(--frame-dim)"/>
-      <rect x="470" y="234" width="80" height="8" rx="4" fill="var(--frame-dim)"/>
-    </g>
-    <rect x="28" y="38" width="340" height="216" rx="16" fill="var(--frame)"/>
-    <rect x="42" y="52" width="312" height="180" rx="8" fill="url(#scr)"/>
-    <path d="M178 254 L218 254 L226 280 L170 280 Z" fill="var(--frame-dim)"/>
-    <rect x="148" y="276" width="100" height="10" rx="5" fill="var(--frame)"/>
-    <rect x="104" y="196" width="188" height="26" rx="9" fill="#FFFFFF" fill-opacity="0.9"/>
-    <rect x="116" y="201" width="16" height="16" rx="4" fill="#5B8DEF"/>
-    <rect x="142" y="201" width="16" height="16" rx="4" fill="#FFD166"/>
-    <rect x="168" y="201" width="16" height="16" rx="4" fill="#7EE0B5"/>
-    <rect x="212" y="201" width="16" height="16" rx="4" fill="#FF8FA3"/>
-    <rect x="238" y="201" width="16" height="16" rx="4" fill="#B9A6FF"/>
-    <rect x="264" y="201" width="16" height="16" rx="4" fill="#5B8DEF"/>
-    <g transform="translate(198 204) rotate(-16) scale(0.42)">
-      <line x1="0" y1="0" x2="0" y2="-80" stroke="#D5DBE4" stroke-width="12" stroke-linecap="round"/>
-      <rect x="-40" y="-104" width="80" height="28" rx="10" fill="#FF6B3D"/>
-      <path d="M-24 -100 L-32 -176 L32 -176 L24 -100 Z" fill="#FF6B3D"/>
-      <rect x="-66" y="-212" width="132" height="40" rx="20" fill="#FF6B3D"/>
-    </g>
-    <path d="M300 186 C 340 110, 430 96, 500 168" fill="none" stroke="var(--muted)" stroke-width="3" stroke-dasharray="8 8" stroke-linecap="round"/>
-    <g transform="translate(398 118)" stroke="#FF6B3D" stroke-width="6" stroke-linecap="round">
-      <line x1="-12" y1="-12" x2="12" y2="12"/><line x1="12" y1="-12" x2="-12" y2="12"/>
-    </g>
-  </svg>
-</div>
+  <main>
+    <div class="hero">
+      <img class="hero-icon" src="icon.png" alt="" width="104" height="104">
+      <h1>Many displays.<br>One Dock.</h1>
+      <p class="lede">DockPin keeps the macOS Dock on your main display. Push the pointer against the bottom of another monitor as often as you like: the Dock stays where it is.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/indapublic/dockpin/releases/latest/download/DockPin.dmg" data-dmg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          Download for Mac
+        </a>
+        <a class="btn btn-ghost" href="#install">Install with Homebrew</a>
+      </div>
+      <p class="meta">Free and open source · Apple silicon and Intel · macOS 13 or later · Signed and notarized by Apple</p>
+      <p class="meta" data-version></p>
+    </div>
 
-<div class="facts">
-  <div class="fact"><b>~2 MB</b><span>of memory</span></div>
-  <div class="fact"><b>0%</b><span>CPU when idle</span></div>
-  <div class="fact"><b>No UI</b><span>nothing in the Dock or menu bar</span></div>
-</div>
+    <div class="demo">
+      <div class="desk on" id="desk" role="img" aria-label="Two displays. The pointer pushes against the bottom of the right display. With DockPin the Dock stays on the main display; without it, the Dock moves to the right display.">
+        <div class="display main" data-display="main">
+          <div class="bezel"><div class="screen"><div class="dock shown"><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+          <div class="neck"></div><div class="foot"></div>
+        </div>
+        <div class="display second" data-display="second">
+          <div class="bezel"><div class="screen"><div class="guard"></div><div class="dock"><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+          <div class="neck"></div><div class="foot"></div>
+        </div>
+        <div class="pointer gone" id="pointer" aria-hidden="true">
+          <svg viewBox="0 0 22 22" width="100%" height="100%"><path d="M3 1.5 L3 18 L7.2 14 L10.2 20.5 L12.9 19.3 L10 12.9 L15.8 12.9 Z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="switch" role="group" aria-label="Show the desk">
+          <button type="button" data-mode="on" aria-pressed="true">With DockPin</button>
+          <button type="button" data-mode="off" aria-pressed="false">Without DockPin</button>
+        </div>
+      </div>
+      <p class="caption" id="caption" aria-live="polite">Push the pointer against the bottom of either display. Try the right one.</p>
+    </div>
 
-<section>
-  <h2>Install</h2>
-  <ol>
-    <li>Download <a href="https://github.com/indapublic/dockpin/releases/latest/download/DockPin.dmg">DockPin.dmg</a> and drag DockPin to Applications.</li>
-    <li>Open DockPin once. From then on it starts at every login.</li>
-    <li>Allow it in System Settings &gt; Privacy &amp; Security &gt; Accessibility.</li>
-  </ol>
-  <p>Or with Homebrew:</p>
-  <div class="code"><pre id="brew">brew tap indapublic/dockpin https://github.com/indapublic/dockpin
+    <section>
+      <h2>macOS moves the Dock wherever your pointer pushes. DockPin says no.</h2>
+      <p class="sub">With more than one display, the Dock follows the pointer to the bottom of whichever screen it touches. Reach for a window at the bottom of your second monitor and the Dock jumps there. DockPin keeps it on the main display.</p>
+      <div class="cmp">
+        <figure>
+          <svg viewBox="0 0 460 200" aria-hidden="true">
+            <defs><linearGradient id="cmp-wall" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--wall-a)"/><stop offset="1" stop-color="var(--wall-b)"/></linearGradient></defs>
+            <rect x="12" y="20" width="230" height="146" rx="10" fill="var(--bezel)" stroke="var(--bezel-edge)"/>
+            <rect x="22" y="30" width="210" height="126" rx="5" fill="var(--wall-b)" opacity=".55"/>
+            <rect x="96" y="166" width="62" height="10" fill="var(--stand)"/><rect x="80" y="176" width="94" height="6" rx="3" fill="var(--stand)"/>
+            <rect x="284" y="44" width="164" height="110" rx="9" fill="var(--bezel)" stroke="var(--bezel-edge)"/>
+            <rect x="292" y="52" width="148" height="94" rx="4" fill="url(#cmp-wall)"/>
+            <rect x="338" y="154" width="56" height="10" fill="var(--stand)"/><rect x="324" y="164" width="84" height="6" rx="3" fill="var(--stand)"/>
+            <rect x="320" y="126" width="92" height="14" rx="5" fill="#fff" opacity=".9"/>
+            <circle cx="334" cy="133" r="3.5" fill="#5b8def"/><circle cx="348" cy="133" r="3.5" fill="#ffd166"/><circle cx="362" cy="133" r="3.5" fill="#7ee0b5"/><circle cx="376" cy="133" r="3.5" fill="#ff8fa3"/><circle cx="390" cy="133" r="3.5" fill="#b9a6ff"/>
+            <rect x="72" y="134" width="110" height="14" rx="5" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="4 3" opacity=".8"/>
+            <path d="M184 128 C 230 70, 300 70, 330 118" fill="none" stroke="var(--c4)" stroke-width="3" stroke-linecap="round"/>
+            <path d="M330 118 l-11 -3 m11 3 l1 -11" fill="none" stroke="var(--c4)" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <figcaption><strong>Without DockPin</strong>The Dock leaves your main display every time the pointer brushes the bottom of another one.</figcaption>
+        </figure>
+        <figure>
+          <svg viewBox="0 0 460 200" aria-hidden="true">
+            <defs><linearGradient id="cmp-wall2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--wall-a)"/><stop offset="1" stop-color="var(--wall-b)"/></linearGradient></defs>
+            <rect x="12" y="20" width="230" height="146" rx="10" fill="var(--bezel)" stroke="var(--bezel-edge)"/>
+            <rect x="22" y="30" width="210" height="126" rx="5" fill="url(#cmp-wall2)"/>
+            <rect x="96" y="166" width="62" height="10" fill="var(--stand)"/><rect x="80" y="176" width="94" height="6" rx="3" fill="var(--stand)"/>
+            <rect x="72" y="132" width="110" height="18" rx="6" fill="#fff" opacity=".9"/>
+            <circle cx="90" cy="141" r="4.5" fill="#5b8def"/><circle cx="108" cy="141" r="4.5" fill="#ffd166"/><circle cx="126" cy="141" r="4.5" fill="#7ee0b5"/><circle cx="144" cy="141" r="4.5" fill="#ff8fa3"/><circle cx="162" cy="141" r="4.5" fill="#b9a6ff"/>
+            <rect x="284" y="44" width="164" height="110" rx="9" fill="var(--bezel)" stroke="var(--bezel-edge)"/>
+            <rect x="292" y="52" width="148" height="94" rx="4" fill="var(--wall-b)" opacity=".55"/>
+            <rect x="292" y="140" width="148" height="6" fill="var(--pin)" opacity=".75"/>
+            <rect x="338" y="154" width="56" height="10" fill="var(--stand)"/><rect x="324" y="164" width="84" height="6" rx="3" fill="var(--stand)"/>
+            <path d="M184 124 C 230 70, 300 70, 330 118" fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 7"/>
+            <g transform="translate(262 84)" stroke="var(--pin)" stroke-width="4.5" stroke-linecap="round"><line x1="-9" y1="-9" x2="9" y2="9"/><line x1="9" y1="-9" x2="-9" y2="9"/></g>
+          </svg>
+          <figcaption><strong>With DockPin</strong>The bottom edge of every other display is guarded, so the Dock never sees the push and stays put.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="features">
+      <h2>Small, quiet, done</h2>
+      <p class="sub">No window, no menu bar icon, nothing to configure. Install it once and forget it is there.</p>
+      <div class="features">
+        <div class="feature" style="--c: var(--pin)">
+          <h3>Guards the Dock edge</h3>
+          <p>DockPin ignores the pointer's movement in a thin 4 pt band along the Dock edge of every display except the main one. The cursor itself moves as usual.</p>
+        </div>
+        <div class="feature" style="--c: var(--c1)">
+          <h3>Brings the Dock back</h3>
+          <p>If the Dock ends up elsewhere anyway, say after you plug in a monitor, DockPin puts it back on the main display.</p>
+        </div>
+        <div class="feature" style="--c: var(--c3)">
+          <h3>Bottom, left or right</h3>
+          <p>DockPin follows the Dock's position and guards the matching edge. Move the Dock to the side and it adapts on its own.</p>
+        </div>
+        <div class="feature" style="--c: var(--c2)">
+          <h3>Crossing stays free</h3>
+          <p>Edges that border another display are left alone, so the pointer moves between your monitors exactly as before.</p>
+        </div>
+        <div class="feature" style="--c: var(--c5)">
+          <h3>About 2 MB of memory</h3>
+          <p>One small C program with no UI. It uses no CPU while idle and only does a few comparisons when the pointer moves.</p>
+        </div>
+        <div class="feature" style="--c: var(--c4)">
+          <h3>Permission survives updates</h3>
+          <p>Releases are signed with the same Developer ID and notarized by Apple, so macOS keeps the Accessibility permission across updates.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="install">
+      <h2>Install</h2>
+      <p class="sub">Use one way or the other. Either way, DockPin starts at every login.</p>
+      <div class="install">
+        <div class="card">
+          <h3>Homebrew <span class="tag">Recommended</span></h3>
+          <p>Installed this way, DockPin updates with the rest of your Homebrew packages.</p>
+          <div class="code">
+            <div class="code-head">Terminal<button class="copy" type="button" data-copy="brew">Copy</button></div>
+            <pre id="brew"><code>brew tap indapublic/dockpin https://github.com/indapublic/dockpin
 brew trust --formula indapublic/dockpin/dockpin
 brew install indapublic/dockpin/dockpin
-brew services start dockpin</pre><button type="button" onclick="copyBrew(this)">Copy</button></div>
-</section>
+brew services start dockpin</code></pre>
+          </div>
+          <p class="after">Update with <code>brew upgrade dockpin</code>. Remove with <code>brew services stop dockpin</code> and <code>brew uninstall dockpin</code>.</p>
+        </div>
+        <div class="card">
+          <h3>Disk image</h3>
+          <p>Drag DockPin to Applications and open it once. From then on it starts at every login.</p>
+          <a class="btn btn-primary" href="https://github.com/indapublic/dockpin/releases/latest/download/DockPin.dmg" data-dmg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+            Download .dmg
+          </a>
+          <p class="after" data-version>All versions are on <a href="https://github.com/indapublic/dockpin/releases">GitHub Releases</a>.</p>
+        </div>
+      </div>
+      <ul class="reqs">
+        <li>Apple silicon or Intel Mac</li>
+        <li>macOS 13 Ventura or later</li>
+        <li>Signed with a Developer ID and notarized by Apple</li>
+      </ul>
+      <p class="then">Then allow DockPin in System Settings › Privacy &amp; Security › Accessibility. macOS asks once; updates keep the permission.</p>
+    </section>
 
-<section>
-  <h2>How it works</h2>
-  <p>macOS moves the Dock to another display when the pointer pushes against that display's bottom edge, or its side edge if the Dock is on the side. DockPin ignores the pointer's movement in a thin 4 pt band along that edge of every display except the main one. The cursor still moves normally, but the Dock never sees the push.</p>
-  <p>If the Dock ends up elsewhere anyway, for example after you plug in a monitor, DockPin brings it back to the main display. The main display is the one you mark as main in System Settings &gt; Displays.</p>
-</section>
+    <section id="limits">
+      <h2>Before you install</h2>
+      <p class="sub">DockPin does one thing in a blunt way. Here is what that means.</p>
+      <ul class="limits">
+        <li><strong>It needs Accessibility</strong>Only apps with this permission may filter pointer events. DockPin only looks at where the pointer is, never connects to the network and stores nothing. Its source is <a href="https://github.com/indapublic/dockpin/blob/main/dockpin.c">one C file</a>.</li>
+        <li><strong>Apps miss the pointer in that 4 pt band</strong>Along the Dock edge of the other displays, apps don't see the pointer move, so hover effects right at the bottom of those screens don't react.</li>
+        <li><strong>Hot corners there stay quiet</strong>Hot corners at the ends of the guarded edge on other displays don't fire. Hot corners on the main display work as usual.</li>
+        <li><strong>The main display is the one macOS calls main</strong>DockPin keeps the Dock on the display marked as main in System Settings › Displays. To use another one, make it the main display there.</li>
+      </ul>
+    </section>
 
-<section>
-  <h2>Why it needs Accessibility</h2>
-  <p>Filtering pointer events is something macOS only allows apps with the Accessibility permission to do. DockPin only looks at where the pointer is. It never connects to the network, collects nothing and stores nothing, and its whole source is <a href="https://github.com/indapublic/dockpin/blob/main/dockpin.c">one C file</a> you can read.</p>
-</section>
-
-<section>
-  <h2>Questions</h2>
-  <details>
-    <summary>How do I quit or remove it?</summary>
-    <p>Turn DockPin off in System Settings &gt; General &gt; Login Items, or run <code>/Applications/DockPin.app/Contents/MacOS/DockPin --unregister</code>, then move DockPin to the Trash. With Homebrew: <code>brew services stop dockpin</code> and <code>brew uninstall dockpin</code>.</p>
-  </details>
-  <details>
-    <summary>Does it work with the Dock on the left or right?</summary>
-    <p>Yes. DockPin follows the Dock's position and guards the matching edge.</p>
-  </details>
-  <details>
-    <summary>Will I lose the permission after an update?</summary>
-    <p>No. Releases are signed with the same Developer ID, so macOS keeps the Accessibility permission across updates.</p>
-  </details>
-  <details>
-    <summary>Can I still move the pointer between monitors?</summary>
-    <p>Yes. Edges that border another display are left alone, so the pointer crosses over as usual.</p>
-  </details>
-</section>
+    <section>
+      <h2>Questions</h2>
+      <div class="faq">
+        <details>
+          <summary>How do I quit or remove it?</summary>
+          <p>Turn DockPin off in System Settings › General › Login Items, or run <code>/Applications/DockPin.app/Contents/MacOS/DockPin --unregister</code>, then move DockPin to the Trash. With Homebrew, run <code>brew services stop dockpin</code> and <code>brew uninstall dockpin</code>.</p>
+        </details>
+        <details>
+          <summary>Does it work when the Dock hides automatically?</summary>
+          <p>Yes. The Dock still appears on the main display when the pointer reaches its edge there. On the other displays it no longer appears or moves.</p>
+        </details>
+        <details>
+          <summary>Can I still move the pointer between monitors?</summary>
+          <p>Yes. Edges that border another display are never guarded, so the pointer crosses over as usual.</p>
+        </details>
+        <details>
+          <summary>Why isn't it in the Mac App Store?</summary>
+          <p>Apps in the Mac App Store must run in Apple's App Sandbox, and filtering pointer events needs the Accessibility permission, which sandboxed apps can't use for this. Window utilities such as Rectangle and AltTab are distributed outside the App Store too.</p>
+        </details>
+        <details>
+          <summary>How much does it cost?</summary>
+          <p>Nothing. DockPin is free and open source under the MIT license.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+</div>
 
 <footer>
-  <p>DockPin is MIT licensed. <a href="https://github.com/indapublic/dockpin">GitHub</a> · <a href="https://github.com/indapublic/dockpin/releases">Releases</a></p>
+  <div class="wrap">
+    <p>DockPin by <a href="https://github.com/indapublic">@indapublic</a>. MIT licensed. Not affiliated with Apple. macOS and Dock are trademarks of Apple Inc.</p>
+    <p><a href="https://github.com/indapublic/dockpin">Source on GitHub</a> · <a href="https://github.com/indapublic/dockpin/issues">Report a problem</a></p>
+  </div>
 </footer>
-</main>
+
 <script>
-function copyBrew(button) {
-  const text = document.getElementById('brew').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    button.textContent = 'Copied';
-    setTimeout(() => { button.textContent = 'Copy'; }, 1500);
+(function () {
+  var desk = document.getElementById('desk');
+  var pointer = document.getElementById('pointer');
+  var caption = document.getElementById('caption');
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('.switch button'));
+  var displays = {
+    main: desk.querySelector('[data-display="main"]'),
+    second: desk.querySelector('[data-display="second"]')
+  };
+  var mode = 'on';
+  var dockOn = 'main';
+  var auto = true;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var TEXT = {
+    on: 'With DockPin, the push never reaches the Dock. It stays on your main display.',
+    off: 'Without DockPin, the Dock jumps to whichever display the pointer pushes against.',
+    back: 'Pushing the bottom of the main display brings the Dock home.',
+    home: 'The Dock is already on the main display.'
+  };
+
+  function setMode(next) {
+    mode = next;
+    desk.classList.toggle('on', mode === 'on');
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false'); });
+  }
+
+  function showDock(name) {
+    dockOn = name;
+    Object.keys(displays).forEach(function (key) {
+      displays[key].querySelector('.dock').classList.toggle('shown', key === name);
+    });
+  }
+
+  // What macOS would do when the pointer pushes against the bottom of a display.
+  function push(name) {
+    if (name === 'second' && mode === 'on') {
+      var guard = displays.second.querySelector('.guard');
+      guard.classList.remove('hit');
+      void guard.offsetWidth;
+      guard.classList.add('hit');
+      caption.textContent = TEXT.on;
+      return;
+    }
+    if (name === dockOn) {
+      caption.textContent = name === 'main' ? TEXT.home : TEXT.off;
+      return;
+    }
+    caption.textContent = dockOn === 'main' ? TEXT.off : TEXT.back;
+    // The Dock slides off one display, then up on the other.
+    displays[dockOn].querySelector('.dock').classList.remove('shown');
+    setTimeout(function () { showDock(name); }, 320);
+  }
+
+  function at(name, fx, fy) {
+    var d = desk.getBoundingClientRect();
+    var s = displays[name].querySelector('.screen').getBoundingClientRect();
+    return [s.left - d.left + s.width * fx, s.top - d.top + s.height * fy];
+  }
+  function moveTo(name, fx, fy) {
+    var p = at(name, fx, fy);
+    pointer.style.transform = 'translate(' + p[0] + 'px,' + p[1] + 'px)';
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  async function pushAt(name) {
+    moveTo(name, name === 'main' ? 0.62 : 0.4, 0.985);
+    await sleep(950);
+    if (!auto) return;
+    pointer.classList.remove('push');
+    void pointer.offsetWidth;
+    pointer.classList.add('push');
+    await sleep(450);
+    if (auto) push(name);
+  }
+
+  // The story on a loop: first without DockPin, then with it.
+  async function play() {
+    // Appear in place rather than glide in from the corner.
+    pointer.style.transition = 'none';
+    moveTo('main', 0.5, 0.45);
+    void pointer.offsetWidth;
+    pointer.style.transition = '';
+    pointer.classList.remove('gone');
+    await sleep(600);
+    while (auto) {
+      setMode('off');
+      await sleep(900); if (!auto) return;
+      await pushAt('second'); if (!auto) return;
+      await sleep(2000); if (!auto) return;
+      await pushAt('main'); if (!auto) return;
+      await sleep(1800); if (!auto) return;
+      setMode('on');
+      caption.textContent = 'Now with DockPin.';
+      moveTo('main', 0.5, 0.45);
+      await sleep(1300); if (!auto) return;
+      await pushAt('second'); if (!auto) return;
+      await sleep(2400); if (!auto) return;
+      moveTo('main', 0.5, 0.45);
+      await sleep(1400);
+    }
+  }
+
+  function takeOver() {
+    auto = false;
+    pointer.classList.add('gone');
+  }
+
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      takeOver();
+      setMode(b.dataset.mode);
+      if (b.dataset.mode === 'on' && dockOn !== 'main') push('main');
+      caption.textContent = b.dataset.mode === 'on'
+        ? 'Now push the bottom of the right display.'
+        : 'Push the bottom of the right display.';
+    });
   });
-}
+
+  // Your own pointer: resting on the bottom edge of a screen counts as a push.
+  var timer = null;
+  var target = null;
+  function pressAt(name, fy) {
+    if (name && fy > 0.9) {
+      if (target !== name) {
+        clearTimeout(timer);
+        target = name;
+        timer = setTimeout(function () { push(name); }, 250);
+      }
+    } else {
+      clearTimeout(timer);
+      target = null;
+    }
+  }
+  desk.addEventListener('mousemove', function (e) {
+    takeOver();
+    var d = e.target.closest && e.target.closest('.display');
+    if (!d) { pressAt(null, 0); return; }
+    var s = d.querySelector('.screen').getBoundingClientRect();
+    pressAt(d.dataset.display, (e.clientY - s.top) / s.height);
+  });
+  desk.addEventListener('mouseleave', function () { pressAt(null, 0); });
+  desk.addEventListener('click', function (e) {
+    var d = e.target.closest && e.target.closest('.display');
+    if (!d) return;
+    takeOver();
+    var s = d.querySelector('.screen').getBoundingClientRect();
+    if ((e.clientY - s.top) / s.height > 0.6) push(d.dataset.display);
+  });
+
+  if (reduced) {
+    auto = false;
+    pointer.classList.add('gone');
+  } else if ('IntersectionObserver' in window) {
+    var started = false;
+    new IntersectionObserver(function (entries) {
+      if (!started && entries[0].isIntersecting) { started = true; play(); }
+    }).observe(desk);
+  } else {
+    play();
+  }
+
+  // Copy buttons.
+  document.querySelectorAll('[data-copy]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var text = document.getElementById(button.dataset.copy).innerText.trim();
+      var done = function (label) {
+        button.textContent = label;
+        setTimeout(function () { button.textContent = 'Copy'; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done('Copied'); }, function () { done('Select to copy'); });
+      } else {
+        done('Select to copy');
+      }
+    });
+  });
+
+  // The latest release: its version, date and the size of the disk image.
+  if (window.fetch) {
+    fetch('https://api.github.com/repos/indapublic/dockpin/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (release) {
+        var dmg = (release.assets || []).filter(function (a) { return /\.dmg$/i.test(a.name); })[0];
+        var version = String(release.tag_name || '').replace(/^v/, '');
+        var date = new Date(release.published_at).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' });
+        var text = 'Version ' + version + ' · ' + date + (dmg ? ' · ' + (Math.round(dmg.size / 1e5) / 10) + ' MB' : '');
+        document.querySelectorAll('[data-version]').forEach(function (el) { el.textContent = text; });
+      })
+      .catch(function () {});
+  }
+})();
 </script>
 </body>
 </html>
