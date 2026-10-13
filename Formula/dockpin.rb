@@ -1,8 +1,8 @@
 class Dockpin < Formula
   desc "Keeps the macOS Dock on the main display"
   homepage "https://github.com/indapublic/dockpin"
-  url "https://github.com/indapublic/dockpin/releases/download/v1.1.2/DockPin-1.1.2.zip"
-  sha256 "773e01fbd8dd6b261b163d7d0a452b14ef8e256ab57fa5429628e284c1431c1c"
+  url "https://github.com/indapublic/dockpin/releases/download/v1.1.3/DockPin-1.1.3.zip"
+  sha256 "626ec8ba5612738ef2d4d690a579a5886f49ddf00a35e5e936ebe502ceed2135"
   license "MIT"
   head "https://github.com/indapublic/dockpin.git", branch: "main"
 
