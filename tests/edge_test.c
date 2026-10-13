@@ -58,6 +58,18 @@ int main(void) {
     expect_orientation("right", EDGE_RIGHT);
     expect_orientation("bottom", EDGE_BOTTOM);
 
+    // A live PID that is not our child (it was reused) must not block the
+    // next returner. /usr/bin/true stands in for DockPin itself.
+    snprintf(selfPath, sizeof selfPath, "/usr/bin/true");
+    returner = getppid();
+    spawn_returner(NULL, NULL);
+    if (returner == getppid() || returner <= 0) { fails++; printf("FAIL returner blocked by a foreign PID\n"); }
+
+    // The fake layout above differs from the real one; loading the real one
+    // twice reports a change only the first time.
+    if (!load_displays()) { fails++; printf("FAIL layout change not reported\n"); }
+    if (load_displays()) { fails++; printf("FAIL unchanged layout reported as changed\n"); }
+
     printf(fails ? "%d failure(s)\n" : "all tests passed\n", fails);
     return fails != 0;
 }

@@ -80,9 +80,13 @@ static void load_orientation(void) {
     free(buf);
 }
 
-static void load_displays(void) {
+// Returns whether the layout differs from the one loaded before.
+static bool load_displays(void) {
     CGDirectDisplayID ids[MAX_DISPLAYS], mainID = CGMainDisplayID();
     uint32_t n = 0;
+    CGRect oldAll[MAX_DISPLAYS], oldMain = mainRect;
+    uint32_t oldN = nAll;
+    memcpy(oldAll, all, sizeof all);
     if (CGGetActiveDisplayList(MAX_DISPLAYS, ids, &n) != kCGErrorSuccess) n = 0;
     mainRect = CGDisplayBounds(mainID);
     nAll = nOthers = 0;
@@ -92,6 +96,8 @@ static void load_displays(void) {
         // Mirrored displays share the main display's bounds: nothing to guard.
         if (ids[i] != mainID && !CGRectEqualToRect(r, mainRect)) others[nOthers++] = r;
     }
+    return nAll != oldN || !CGRectEqualToRect(mainRect, oldMain)
+        || memcmp(all, oldAll, nAll * sizeof all[0]) != 0;
 }
 
 // --- Bringing the Dock back (child process) ---------------------------------
@@ -170,7 +176,9 @@ static int return_dock(void) {
 // --- Resident process --------------------------------------------------------
 
 static void spawn_returner(CFRunLoopTimerRef t, void *ctx) {
-    if (returner > 0 && kill(returner, 0) == 0) return;  // previous one still running
+    // Asks about our own child only: after a few days its bare PID may well
+    // belong to an unrelated process.
+    if (returner > 0 && waitpid(returner, NULL, WNOHANG) == 0) return;  // still running
     char *args[] = { selfPath, "--return", NULL };
     if (posix_spawn(&returner, selfPath, NULL, NULL, args, NULL) != 0) returner = 0;
 }
@@ -181,8 +189,20 @@ static void schedule_return(double delay) {
 
 static void on_reconfig(CGDirectDisplayID d, CGDisplayChangeSummaryFlags flags, void *ctx) {
     if (flags & kCGDisplayBeginConfigurationFlag) return;
-    load_displays();
+    if (load_displays()) fprintf(stderr, "DockPin: displays changed, %u other display(s)\n", nOthers);
     schedule_return(2.0);  // let the Dock settle after the change first
+}
+
+// The pointer is on no display we know of, so the layout changed without the
+// reconfiguration callback telling us. Catch up, at most once a second.
+static void catch_up_with_displays(void) {
+    static CFAbsoluteTime last;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now - last < 1.0) return;
+    last = now;
+    if (!load_displays()) return;
+    fprintf(stderr, "DockPin: display layout was out of date, %u other display(s) now\n", nOthers);
+    schedule_return(1.0);
 }
 
 static bool on_any_display(CGPoint p) {
@@ -220,6 +240,7 @@ static CGEventRef on_event(CGEventTapProxy proxy, CGEventType type, CGEventRef e
         // Edge shared with another display: the cursor just crosses over there.
         return on_any_display(beyond) ? ev : NULL;
     }
+    if (!on_any_display(p)) catch_up_with_displays();
     return ev;
 }
 
