@@ -12,6 +12,8 @@
 // Homebrew installs are started at login by `brew services`. A copy installed
 // from the DMG registers the launch agent in its own bundle instead and hands
 // over to it; `DockPin --unregister` removes that agent again.
+//
+// Every install logs to ~/Library/Logs/DockPin.log.
 
 #include <CoreGraphics/CoreGraphics.h>
 #include <dlfcn.h>
@@ -21,12 +23,15 @@
 #include <objc/message.h>
 #include <objc/runtime.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #define MAX_DISPLAYS 16
@@ -34,6 +39,7 @@
 #define PREFS_RECHECK 2.0  // seconds between Dock orientation re-checks
 #define MOVE_ATTEMPTS 3    // tries to bring the Dock back per display change
 #define DISPLAY_POLL 3.0   // seconds between display layout checks
+#define LOG_LIMIT (512 * 1024)  // bytes, then the log moves to DockPin.old.log
 #define AGENT_LABEL "com.indapublic.dockpin"  // Contents/Library/LaunchAgents/<label>.plist
 
 enum { EDGE_BOTTOM, EDGE_LEFT, EDGE_RIGHT };
@@ -51,6 +57,36 @@ static char           selfPath[1024];
 static pid_t          returner;
 static CFRunLoopTimerRef returnTimer;
 static CFMachPortRef  tap;
+static const char    *EDGE_NAME[] = { "bottom", "left", "right" };
+
+// --- Log ---------------------------------------------------------------------
+
+// Every install writes to the same file, so a bug report can always carry
+// it. Started from a terminal, DockPin keeps writing to the terminal.
+static void open_log(const char *home) {
+    char path[PATH_MAX], old[PATH_MAX];
+    struct stat st;
+    if (!home || isatty(STDERR_FILENO)) return;
+    snprintf(path, sizeof path, "%s/Library/Logs/DockPin.log", home);
+    snprintf(old, sizeof old, "%s/Library/Logs/DockPin.old.log", home);
+    if (stat(path, &st) == 0 && st.st_size > LOG_LIMIT) rename(path, old);
+    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd < 0) return;
+    dup2(fd, STDERR_FILENO);
+    close(fd);
+}
+
+static void say(const char *format, ...) {
+    char stamp[24];
+    time_t now = time(NULL);
+    strftime(stamp, sizeof stamp, "%Y-%m-%d %H:%M:%S", localtime(&now));
+    fprintf(stderr, "%s ", stamp);
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    fputc('\n', stderr);
+}
 
 // Reads the Dock plist directly: a CFPreferences client would keep a cfprefsd
 // connection and a cached copy of the whole domain alive in this process.
@@ -99,6 +135,20 @@ static bool load_displays(void) {
     }
     return nAll != oldN || !CGRectEqualToRect(mainRect, oldMain)
         || memcmp(all, oldAll, nAll * sizeof all[0]) != 0;
+}
+
+// "main 1440x900 at 0,0; 2560x1440 at -592,-1440"
+static const char *describe_displays(void) {
+    static char text[512];
+    size_t used = 0;
+    text[0] = 0;
+    for (uint32_t i = 0; i < nAll && used < sizeof text; i++) {
+        CGRect r = all[i];
+        used += snprintf(text + used, sizeof text - used, "%s%s%.0fx%.0f at %.0f,%.0f",
+                         i ? "; " : "", CGRectEqualToRect(r, mainRect) ? "main " : "",
+                         r.size.width, r.size.height, r.origin.x, r.origin.y);
+    }
+    return text;
 }
 
 // --- Bringing the Dock back (child process) ---------------------------------
@@ -167,7 +217,7 @@ static int return_dock(void) {
     load_orientation();
     load_displays();
     for (int i = 0; i < MOVE_ATTEMPTS && nOthers > 0 && dock_off_main(); i++) {
-        fprintf(stderr, "DockPin: moving the Dock to the main display\n");
+        say("moving the Dock to the main display");
         push_main_edge();
         usleep(1500000);
     }
@@ -193,7 +243,8 @@ static void schedule_return(double delay) {
 // takes about 50 us, so DockPin simply looks every few seconds.
 static void check_displays(CFRunLoopTimerRef t, void *ctx) {
     if (!load_displays()) return;
-    fprintf(stderr, "DockPin: displays changed, %u other display(s)\n", nOthers);
+    load_orientation();
+    say("displays changed: %s; Dock at the %s", describe_displays(), EDGE_NAME[edge]);
     schedule_return(2.0);  // let the Dock settle after the change first
 }
 
@@ -312,7 +363,7 @@ static bool hand_over_to_agent(void) {
     if (status == AGENT_ENABLED) return true;
     if (status == AGENT_REQUIRES_APPROVAL) return false;
     if (!agent_call(agent, "registerAndReturnError:")) return false;
-    fprintf(stderr, "DockPin: registered the login agent\n");
+    say("registered the login agent");
     return true;
 }
 
@@ -335,6 +386,15 @@ static bool installed_by_homebrew(void) {
     return realpath(selfPath, real) && strstr(real, "/Cellar/");
 }
 
+static void say_hello(void) {
+    char version[32] = "dev", macos[32] = "?";
+    size_t size = sizeof macos;
+    CFTypeRef v = CFBundleGetValueForInfoDictionaryKey(CFBundleGetMainBundle(), CFSTR("CFBundleShortVersionString"));
+    if (v && CFGetTypeID(v) == CFStringGetTypeID()) CFStringGetCString(v, version, sizeof version, kCFStringEncodingUTF8);
+    sysctlbyname("kern.osproductversion", macos, &size, NULL, 0);
+    say("DockPin %s on macOS %s (pid %d)", version, macos, getpid());
+}
+
 int main(int argc, char **argv) {
     const char *home = getenv("HOME");
     snprintf(prefsPath, sizeof prefsPath, "%s/Library/Preferences/com.apple.dock.plist", home ? home : "");
@@ -343,6 +403,9 @@ int main(int argc, char **argv) {
 
     if (argc > 1 && strcmp(argv[1], "--return") == 0) return return_dock();
     if (argc > 1 && strcmp(argv[1], "--unregister") == 0) return unregister_agent();
+
+    open_log(home);
+    say_hello();
     if (opened_from_finder() && !installed_by_homebrew() && hand_over_to_agent()) return 0;
 
     // AXIsProcessTrusted() can stay stale for the life of the process after the
@@ -350,7 +413,7 @@ int main(int argc, char **argv) {
     bool prompted = false;
     while (!(tap = create_tap())) {
         if (!prompted) {
-            fprintf(stderr, "DockPin: waiting for Accessibility permission\n");
+            say("waiting for Accessibility permission");
             request_access();
             prompted = true;
         }
@@ -375,7 +438,7 @@ int main(int argc, char **argv) {
     CFRunLoopTimerSetTolerance(displayTimer, 1.0);  // lets macOS batch the wakeups
     CFRunLoopAddTimer(CFRunLoopGetMain(), displayTimer, kCFRunLoopCommonModes);
 
-    fprintf(stderr, "DockPin: active, %u other display(s)\n", nOthers);
+    say("active: %s; Dock at the %s", describe_displays(), EDGE_NAME[edge]);
     CFRunLoopRun();
     return 0;
 }

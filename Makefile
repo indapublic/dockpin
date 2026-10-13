@@ -67,8 +67,8 @@ status: ## Show the service state and memory footprint
 	@brew services info dockpin
 	@footprint DockPin 2>/dev/null | grep -o 'Footprint: .*' || true
 
-logs: ## Follow the service log
-	tail -f "$$(brew --prefix)/var/log/dockpin.log"
+logs: ## Follow the log (~/Library/Logs/DockPin.log)
+	tail -f "$$HOME/Library/Logs/DockPin.log"
 
 release: ## Release a new version: make release VERSION=x.y.z
 	@test -n "$(VERSION)" || { echo "Usage: make release VERSION=x.y.z"; exit 2; }

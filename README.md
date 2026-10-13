@@ -41,7 +41,7 @@ Run from a clone of this repository; `make help` prints the same list.
 | `make uninstall` | Stop the service and uninstall |
 | `make start`, `make stop`, `make restart` | Control the service |
 | `make status` | Show the service state and memory footprint |
-| `make logs` | Follow the service log |
+| `make logs` | Follow the log |
 | `make` | Build `DockPin.app` |
 | `make test` | Run the edge-logic tests |
 | `make lint` | Run the clang static analyzer and shellcheck |
@@ -80,6 +80,23 @@ where the Dock is and, if needed, brings it back to the main display by
 briefly pushing the pointer against that display's edge.
 
 The main display is the one marked as main in System Settings > Displays.
+
+## Logs and bug reports
+
+DockPin keeps a short log at `~/Library/Logs/DockPin.log`, however it was
+installed. Each line has a timestamp; DockPin records when it starts (with its
+version and the macOS version), the display layout, display changes and each
+time it moves the Dock back. Nothing else: no app names, no files, nothing from
+the network. Past 512 KB the log moves to `DockPin.old.log` and starts over.
+
+To report a problem, [open an issue](https://github.com/indapublic/dockpin/issues/new/choose)
+and attach the log. This shows it in Finder:
+
+```sh
+open -R ~/Library/Logs/DockPin.log
+```
+
+Console.app lists it too, under Log Reports.
 
 ## License
 

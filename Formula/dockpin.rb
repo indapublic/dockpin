@@ -22,7 +22,6 @@ class Dockpin < Formula
     process_type :interactive
     # The per-CPU nano allocator alone would double the footprint.
     environment_variables MallocNanoZone: "0"
-    error_log_path var/"log/dockpin.log"
   end
 
   def caveats

@@ -1,0 +1,41 @@
+name: Bug report
+description: Something DockPin does wrong or doesn't do
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The log tells most of the story, so please attach it.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead. For example, which display the Dock moved to and what you were doing at the time.
+    validations:
+      required: true
+  - type: textarea
+    id: displays
+    attributes:
+      label: Your displays
+      description: How many there are, which one is main, how they are arranged and where the Dock sits (bottom, left or right).
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How you installed DockPin
+      options:
+        - Disk image (DMG)
+        - Homebrew
+        - Built from source
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        Drag `~/Library/Logs/DockPin.log` here. In Terminal, `open -R ~/Library/Logs/DockPin.log` shows it in Finder. Its lines include the DockPin and macOS versions and your display layout, nothing else.
+      placeholder: Drop the file here or paste its last lines.
+    validations:
+      required: true

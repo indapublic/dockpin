@@ -46,6 +46,10 @@ int main(void) {
     expect(-591, -500, "pass");  // left edge does not matter for a bottom Dock
     expect(1000, -700, "pass");
 
+    // The layout as the log shows it.
+    const char *want = "main 1440x900 at 0,0; 2560x1440 at -592,-1440";
+    if (strcmp(describe_displays(), want)) { fails++; printf("FAIL layout text: %s\n", describe_displays()); }
+
     edge = EDGE_LEFT;
     expect(-591, -500, "drop");
     expect(-300, -1, "pass");
