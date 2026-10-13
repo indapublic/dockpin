@@ -33,6 +33,7 @@
 #define BAND 4.0           // points from the edge where events are swallowed
 #define PREFS_RECHECK 2.0  // seconds between Dock orientation re-checks
 #define MOVE_ATTEMPTS 3    // tries to bring the Dock back per display change
+#define DISPLAY_POLL 3.0   // seconds between display layout checks
 #define AGENT_LABEL "com.indapublic.dockpin"  // Contents/Library/LaunchAgents/<label>.plist
 
 enum { EDGE_BOTTOM, EDGE_LEFT, EDGE_RIGHT };
@@ -187,22 +188,13 @@ static void schedule_return(double delay) {
     CFRunLoopTimerSetNextFireDate(returnTimer, CFAbsoluteTimeGetCurrent() + delay);
 }
 
-static void on_reconfig(CGDirectDisplayID d, CGDisplayChangeSummaryFlags flags, void *ctx) {
-    if (flags & kCGDisplayBeginConfigurationFlag) return;
-    if (load_displays()) fprintf(stderr, "DockPin: displays changed, %u other display(s)\n", nOthers);
-    schedule_return(2.0);  // let the Dock settle after the change first
-}
-
-// The pointer is on no display we know of, so the layout changed without the
-// reconfiguration callback telling us. Catch up, at most once a second.
-static void catch_up_with_displays(void) {
-    static CFAbsoluteTime last;
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (now - last < 1.0) return;
-    last = now;
+// CGDisplayRegisterReconfigurationCallback never fires in a process without
+// AppKit, and AppKit would more than double the footprint. Reading the layout
+// takes about 50 us, so DockPin simply looks every few seconds.
+static void check_displays(CFRunLoopTimerRef t, void *ctx) {
     if (!load_displays()) return;
-    fprintf(stderr, "DockPin: display layout was out of date, %u other display(s) now\n", nOthers);
-    schedule_return(1.0);
+    fprintf(stderr, "DockPin: displays changed, %u other display(s)\n", nOthers);
+    schedule_return(2.0);  // let the Dock settle after the change first
 }
 
 static bool on_any_display(CGPoint p) {
@@ -240,7 +232,6 @@ static CGEventRef on_event(CGEventTapProxy proxy, CGEventType type, CGEventRef e
         // Edge shared with another display: the cursor just crosses over there.
         return on_any_display(beyond) ? ev : NULL;
     }
-    if (!on_any_display(p)) catch_up_with_displays();
     return ev;
 }
 
@@ -370,7 +361,6 @@ int main(int argc, char **argv) {
     signal(SIGCHLD, SIG_IGN);  // children are reaped automatically
     load_orientation();
     load_displays();
-    CGDisplayRegisterReconfigurationCallback(on_reconfig, NULL);
 
     CFRunLoopSourceRef src = CFMachPortCreateRunLoopSource(NULL, tap, 0);
     CFRunLoopAddSource(CFRunLoopGetMain(), src, kCFRunLoopCommonModes);
@@ -379,6 +369,11 @@ int main(int argc, char **argv) {
 
     returnTimer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent() + 1.0, 1e9, 0, 0, spawn_returner, NULL);
     CFRunLoopAddTimer(CFRunLoopGetMain(), returnTimer, kCFRunLoopCommonModes);
+
+    CFRunLoopTimerRef displayTimer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent() + DISPLAY_POLL,
+                                                          DISPLAY_POLL, 0, 0, check_displays, NULL);
+    CFRunLoopTimerSetTolerance(displayTimer, 1.0);  // lets macOS batch the wakeups
+    CFRunLoopAddTimer(CFRunLoopGetMain(), displayTimer, kCFRunLoopCommonModes);
 
     fprintf(stderr, "DockPin: active, %u other display(s)\n", nOthers);
     CFRunLoopRun();
